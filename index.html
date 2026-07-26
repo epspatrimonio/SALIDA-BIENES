@@ -91,9 +91,21 @@
 
   <!-- Main Container -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
-    
-    <!-- Configuración del origen de datos -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4">
+
+    <!-- Pestañas de Navegación -->
+    <div class="flex border-b border-slate-200 shrink-0">
+      <button id="tab-nueva-orden" class="px-5 py-3 text-sm font-bold border-b-2 border-[#00B0F0] text-[#00B0F0] transition-colors focus:outline-none cursor-pointer">
+        Nueva Orden de Salida
+      </button>
+      <button id="tab-historial" class="px-5 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-colors focus:outline-none cursor-pointer">
+        Historial de Salidas
+      </button>
+    </div>
+
+    <!-- Sección: Nueva Orden de Salida -->
+    <div id="section-nueva-orden" class="flex flex-col gap-6">
+      <!-- Configuración del origen de datos -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
@@ -308,6 +320,49 @@
       </div>
 
     </form>
+    </div><!-- /#section-nueva-orden -->
+
+    <!-- Sección: Historial de Salidas -->
+    <div id="section-historial" class="hidden flex flex-col gap-6">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Historial de Salidas Registradas</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Listado de actas de salida almacenadas en la base de datos.</p>
+          </div>
+          <button id="btn-refrescar-historial" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"/>
+            </svg>
+            Actualizar
+          </button>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 rounded-lg custom-scrollbar">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold">
+                <th class="p-3 w-32">Nro Orden</th>
+                <th class="p-3 w-28">Fecha</th>
+                <th class="p-3 w-56">Responsable / Cargo</th>
+                <th class="p-3 w-48">Tipo / Ubicación</th>
+                <th class="p-3 min-w-[200px]">Motivo</th>
+                <th class="p-3 w-24 text-center">Bienes</th>
+                <th class="p-3 w-24 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="historial-tbody" class="divide-y divide-slate-100">
+              <!-- Cargado dinámicamente -->
+              <tr>
+                <td colspan="7" class="p-8 text-center text-slate-400 font-medium">
+                  Cargando historial de salidas...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
     
   </main>
 
