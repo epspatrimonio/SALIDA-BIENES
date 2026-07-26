@@ -1,0 +1,10 @@
+# Ignorar archivos locales temporales
+*.log
+.DS_Store
+Thumbs.db
+
+# Datos descargados o cacheados localmente (si se usan)
+activos.json
+celulares.json
+bienes_terceros.json
+inventario_fisico.json
