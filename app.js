@@ -580,8 +580,8 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
 
     // Validar formulario básico
-    if (!formFecha.value || !formResponsable.value.trim() || !formCargo.value.trim() || !formUbicacion.value.trim()) {
-      alert('Por favor complete todos los datos obligatorios del formulario (Fecha, Responsable, Cargo y Ubicación).');
+    if (!formFecha.value || !formResponsable.value.trim() || !formCargo.value.trim() || !formUbicacion.value.trim() || !formMotivo.value.trim()) {
+      alert('Por favor complete todos los datos obligatorios del formulario (Fecha, Motivo, Responsable, Cargo y Ubicación).');
       return;
     }
 
@@ -630,7 +630,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Fallo en la comunicación con el servidor.');
+        let errMsg = '';
+        if (errorData.detail && Array.isArray(errorData.detail)) {
+          errorData.detail.forEach(err => {
+            const field = err.loc[err.loc.length - 1];
+            errMsg += `- Campo "${field}": ${err.msg}\n`;
+          });
+        } else {
+          errMsg = errorData.detail || 'Fallo en la comunicación con el servidor.';
+        }
+        throw new Error(errMsg);
       }
 
       const dbSalidaResult = await response.json();
