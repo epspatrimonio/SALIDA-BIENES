@@ -4,11 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let responsablesList = []; // Lista única de responsables para autocompletado
   let responsablesDataMap = {}; // Mapea nombre -> {cargo, ubicacion}
   let historialSalidas = [];
+  let modoActual = 'SISTEMA'; // SISTEMA | MANUAL
 
-  // Elementos del DOM - Origen de datos y General
-  const dataStatusBadge = document.getElementById('data-status-badge');
-  const fileUploader = document.getElementById('file-uploader');
-  
   // Elementos de Navegación
   const tabNuevaOrden = document.getElementById('tab-nueva-orden');
   const tabHistorial = document.getElementById('tab-historial');
@@ -37,40 +34,75 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const btnLimpiar = document.getElementById('btn-limpiar');
   const btnGenerar = document.getElementById('btn-generar');
+  const codigoDisplay = document.getElementById('codigo-salida-display');
 
   // Inicializar fecha de hoy por defecto en el formulario
   const hoy = new Date().toISOString().split('T')[0];
   formFecha.value = hoy;
 
+  // Función global de cambio de modo (llamada desde onclick en HTML)
+  window.setModo = function(modo) {
+    modoActual = modo;
+    const btnSistema = document.getElementById('modo-sistema-btn');
+    const btnManual = document.getElementById('modo-manual-btn');
+    const sectionFiltroResp = document.getElementById('section-filtro-responsable');
+
+    if (modo === 'SISTEMA') {
+      btnSistema.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-brand-500 bg-brand-50 text-brand-700 cursor-pointer';
+      btnManual.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-slate-200 text-slate-500 hover:border-slate-300 cursor-pointer';
+      if (sectionFiltroResp) sectionFiltroResp.classList.remove('hidden');
+    } else {
+      btnManual.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-brand-500 bg-brand-50 text-brand-700 cursor-pointer';
+      btnSistema.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-slate-200 text-slate-500 hover:border-slate-300 cursor-pointer';
+      if (sectionFiltroResp) sectionFiltroResp.classList.add('hidden');
+      // En modo manual limpiar los bienes cargados del sistema
+      bienesSeleccionados = [];
+      renderBienesTable();
+    }
+    // Limpiar datos del responsable
+    if (formResponsable) formResponsable.value = '';
+    if (formCargo) formCargo.value = '';
+    if (formUbicacion) formUbicacion.value = '';
+    if (searchResponsable) searchResponsable.value = '';
+  };
+
+  // Actualizar el código de salida mostrado al obtener el siguiente número
+  async function fetchNextCodigoSalida() {
+    try {
+      const resp = await fetch('/api/activos/salidas');
+      if (resp.ok) {
+        const salidas = await resp.json();
+        const year = new Date().getFullYear();
+        const thisYear = salidas.filter(s => (s.fecha_orden || '').startsWith(year.toString()));
+        const next = String(thisYear.length + 1).padStart(2, '0');
+        if (codigoDisplay) codigoDisplay.textContent = `${next}-${year}`;
+      }
+    } catch (e) {
+      if (codigoDisplay) codigoDisplay.textContent = '—';
+    }
+  }
+
   // Cargar datos al iniciar
   loadActivosData();
+  fetchNextCodigoSalida();
 
-  // Función asíncrona para buscar y cargar activos en diferentes rutas posibles
+  // Cargar activos desde el servidor FastAPI
   async function loadActivosData() {
     const paths = [
-      '/api/activos',                           // 1. Endpoint en vivo de FastAPI
-      '../public/activos.json',                 // 2. Ruta relativa al dashboard (public)
-      './activos.json'                          // 3. Ruta local en la misma carpeta
+      '/api/activos',
+      'https://localhost:8000/api/activos'
     ];
-
-    let loaded = false;
     for (const path of paths) {
       try {
         const response = await fetch(path);
         if (response.ok) {
           activos = await response.json();
           processActivosData();
-          updateStatusBadge('success', 'Activos cargados correctamente');
-          loaded = true;
           break;
         }
       } catch (err) {
         console.warn(`No se pudo cargar activos desde ${path}:`, err);
       }
-    }
-
-    if (!loaded) {
-      updateStatusBadge('warning', 'Sube activos.json manualmente o inicia el servidor');
     }
   }
 
@@ -101,38 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     responsablesList = Array.from(respSet).sort();
   }
-
-  // Actualizar estado del badge de carga de activos
-  function updateStatusBadge(type, message) {
-    if (type === 'success') {
-      dataStatusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
-      dataStatusBadge.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> ${message}`;
-    } else if (type === 'warning') {
-      dataStatusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200';
-      dataStatusBadge.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> ${message}`;
-    }
-  }
-
-  // Manejar subida manual de activos.json
-  fileUploader.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        activos = JSON.parse(event.target.result);
-        processActivosData();
-        updateStatusBadge('success', 'Activos subidos manualmente');
-        searchActivo.disabled = false;
-        searchResponsable.disabled = false;
-      } catch (err) {
-        alert('Error al leer el archivo JSON. Asegúrese de que sea un archivo válido.');
-        console.error(err);
-      }
-    };
-    reader.readAsText(file);
-  });
 
   // Alternar entre pestañas de navegación
   function switchTab(tab) {
