@@ -144,36 +144,64 @@ document.addEventListener('DOMContentLoaded', () => {
   loadActivosData();
   fetchNextCodigoSalida();
 
-  // Cargar activos desde el servidor FastAPI
+  let cargosList = [];
+  let sucursalesList = [];
+
+  // Cargar activos y listas de dimensiones desde el servidor FastAPI
   async function loadActivosData() {
-    const paths = [
-      `${API_BASE}/activos`,
-      'http://127.0.0.1:8000/api/activos'
-    ];
-    for (const path of paths) {
-      try {
-        const response = await fetch(path);
-        if (response.ok) {
-          activos = await response.json();
-          processActivosData();
-          break;
-        }
-      } catch (err) {
-        console.warn(`No se pudo cargar activos desde ${path}:`, err);
-      }
+    try {
+      const [activosRes, personalRes, sucursalesRes, puestosRes] = await Promise.all([
+        fetch(`${API_BASE}/activos`).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`${API_BASE}/listas/personal`).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`${API_BASE}/listas/sucursales`).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`${API_BASE}/listas/puestos`).then(r => r.ok ? r.json() : []).catch(() => [])
+      ]);
+
+      activos = activosRes || [];
+      processDimensionData(personalRes, sucursalesRes, puestosRes);
+    } catch (err) {
+      console.warn(`Error al cargar datos e listas de dimensiones desde API:`, err);
     }
   }
 
-  let cargosList = [];
-  let sucursalesList = ['SEDE CENTRAL', 'LA MERCED', 'SATIPO', 'OXAPAMPA', 'PICHANAKI', 'PERENÉ', 'VILLA RICA'];
-
-  // Procesar datos al cargar para obtener responsables, cargos y sucursales únicas
-  function processActivosData() {
+  // Procesar datos de las tablas de dimensiones para selectores y autocompletados
+  function processDimensionData(personalData, sucursalesData, puestosData) {
     responsablesDataMap = {};
     const respSet = new Set();
     const cargoSet = new Set();
-    const sucSet = new Set(sucursalesList);
+    const sucSet = new Set();
 
+    // 1. Cargar dimensión personal (dim_personal / vw_lista_personal)
+    if (Array.isArray(personalData)) {
+      personalData.forEach(p => {
+        const name = (p.label || p.personal || '').trim().toUpperCase();
+        if (name) {
+          respSet.add(name);
+          responsablesDataMap[name] = {
+            cargo: '—',
+            ubicacion: '—'
+          };
+        }
+      });
+    }
+
+    // 2. Cargar dimensión sucursales (vw_lista_sucursal)
+    if (Array.isArray(sucursalesData)) {
+      sucursalesData.forEach(s => {
+        const suc = (s.label || s.sucursal || '').trim().toUpperCase();
+        if (suc) sucSet.add(suc);
+      });
+    }
+
+    // 3. Cargar dimensión puestos (vw_lista_puesto_por_sucursal)
+    if (Array.isArray(puestosData)) {
+      puestosData.forEach(p => {
+        const cargo = (p.label || '').trim().toUpperCase();
+        if (cargo) cargoSet.add(cargo);
+      });
+    }
+
+    // 4. Complementar con responsables y ubicaciones asociadas a activos
     activos.forEach(item => {
       const resp = item.responsable ? item.responsable.trim().toUpperCase() : '';
       const cargo = item.puesto || item.subcategoria || item.unidad || '';
