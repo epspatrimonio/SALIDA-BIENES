@@ -68,6 +68,13 @@
     }
 
     /* Estilos adaptativos cuando se carga dentro del Módulo del App Principal (iframe) */
+    html.in-iframe,
+    body.in-iframe {
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      height: auto !important;
+      min-height: 100% !important;
+    }
     body.in-iframe header,
     html.in-iframe header {
       display: none !important;
@@ -78,7 +85,7 @@
     }
     body.in-iframe main,
     html.in-iframe main {
-      padding: 0.75rem !important;
+      padding: 0.75rem 0.75rem 4rem 0.75rem !important;
       max-width: 100% !important;
       gap: 1rem !important;
     }
