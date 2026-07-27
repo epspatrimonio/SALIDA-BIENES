@@ -976,7 +976,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 1. Encabezado de la Orden
     if (logoImg) {
-      doc.addImage(logoImg, 'PNG', marginX, posY, 22, 11);
+      doc.addImage(logoImg, 'JPEG', marginX, posY - 2, 20, 20);
     }
     
     // Datos de Entidad
