@@ -231,9 +231,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    const DIM_SUCURSAL_ORDER = ['SEDE CENTRAL', 'LA MERCED', 'SATIPO', 'OXAPAMPA', 'PICHANAKI', 'PERENÉ', 'VILLA RICA'];
+    function sortSucursalesByDim(list) {
+      return list.sort((a, b) => {
+        const idxA = DIM_SUCURSAL_ORDER.indexOf(a.toUpperCase());
+        const idxB = DIM_SUCURSAL_ORDER.indexOf(b.toUpperCase());
+        const posA = idxA !== -1 ? idxA : 999;
+        const posB = idxB !== -1 ? idxB : 999;
+        if (posA !== posB) return posA - posB;
+        return a.localeCompare(b);
+      });
+    }
+
     responsablesList = Array.from(respSet).sort();
     cargosList = Array.from(cargoSet).sort();
-    sucursalesList = Array.from(sucSet).sort();
+    sucursalesList = sortSucursalesByDim(Array.from(sucSet));
 
     populateSucursalesDropdown();
   }
