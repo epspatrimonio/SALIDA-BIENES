@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // ── Detectar URL base de la API ──────────────────────────────────────────
+  // En producción (GitHub Pages) apunta al backend local en la red
+  // En local (localhost) usa ruta relativa al mismo servidor FastAPI
+  const isGitHubPages = window.location.hostname.includes('github.io');
+  const API_BASE = isGitHubPages
+    ? 'http://127.0.0.1:8000/api'
+    : '/api';
+
   let activos = [];
   let bienesSeleccionados = [];
   let responsablesList = []; // Lista única de responsables para autocompletado
@@ -69,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Actualizar el código de salida mostrado al obtener el siguiente número
   async function fetchNextCodigoSalida() {
     try {
-      const resp = await fetch('/api/activos/salidas');
+      const resp = await fetch(`${API_BASE}/activos/salidas`);
       if (resp.ok) {
         const salidas = await resp.json();
         const year = new Date().getFullYear();
@@ -89,8 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Cargar activos desde el servidor FastAPI
   async function loadActivosData() {
     const paths = [
-      '/api/activos',
-      'https://localhost:8000/api/activos'
+      `${API_BASE}/activos`,
+      'http://127.0.0.1:8000/api/activos'
     ];
     for (const path of paths) {
       try {
@@ -164,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </tr>
     `;
     try {
-      const response = await fetch('/api/activos/salidas');
+      const response = await fetch(`${API_BASE}/activos/salidas`);
       if (response.ok) {
         historialSalidas = await response.json();
         renderHistorialTable();
@@ -620,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       // 2. Realizar petición POST al backend
-      const response = await fetch('/api/activos/salidas', {
+      const response = await fetch(`${API_BASE}/activos/salidas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
