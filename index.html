@@ -261,8 +261,8 @@
             </button>
           </div>
 
-          <!-- Buscador de Activos -->
-          <div class="relative">
+          <!-- Buscador de Activos (Solo en Opción 1) -->
+          <div id="section-search-activo" class="relative">
             <label for="search-activo" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Buscar por Código Patrimonial o Denominación</label>
             <div class="relative">
               <input type="text" id="search-activo" placeholder="Ej: 742205560002 o LAPTOP..." class="w-full rounded-lg border border-slate-300 pl-10 pr-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none">
@@ -276,11 +276,14 @@
             <div id="activo-suggestions" class="absolute left-0 right-0 mt-1 max-h-60 bg-white border border-slate-200 rounded-lg shadow-lg overflow-y-auto hidden z-30"></div>
           </div>
 
-          <!-- Bienes agregados (Tabla) -->
-          <div class="overflow-x-auto border border-slate-200 rounded-lg custom-scrollbar">
+          <!-- Bienes agregados (Tabla con Scrollbar) -->
+          <div class="overflow-x-auto overflow-y-auto max-h-[380px] border border-slate-200 rounded-lg custom-scrollbar">
             <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold">
+              <thead class="sticky top-0 z-10 bg-slate-50 border-b border-slate-200">
+                <tr class="text-slate-600 font-bold">
+                  <th class="p-3 w-10 text-center" id="th-select-all">
+                    <input type="checkbox" id="chk-select-all" checked title="Seleccionar/Deseleccionar todos los bienes" class="w-4 h-4 text-brand-500 rounded border-slate-300 cursor-pointer">
+                  </th>
                   <th class="p-3 w-10 text-center">N°</th>
                   <th class="p-3 w-32">Cód. Patrimonial</th>
                   <th class="p-3 w-36">Denominación</th>

@@ -60,7 +60,19 @@ document.addEventListener('DOMContentLoaded', () => {
         numero_serie: 'S/S',
         estado_activo: 'BUENO',
         accesorios: '',
-        isManual: true
+        isManual: true,
+        seleccionado: true
+      });
+      renderSelectedBienesTable();
+    });
+  }
+
+  const chkSelectAll = document.getElementById('chk-select-all');
+  if (chkSelectAll) {
+    chkSelectAll.addEventListener('change', (e) => {
+      const isChecked = e.target.checked;
+      bienesSeleccionados.forEach(b => {
+        b.seleccionado = isChecked;
       });
       renderSelectedBienesTable();
     });
@@ -72,18 +84,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSistema = document.getElementById('modo-sistema-btn');
     const btnManual = document.getElementById('modo-manual-btn');
     const sectionFiltroResp = document.getElementById('section-filtro-responsable');
+    const sectionSearchActivo = document.getElementById('section-search-activo');
+    const thSelectAll = document.getElementById('th-select-all');
+
+    // El autocompletado de responsables se mantiene VISIBLE en ambos modos
+    if (sectionFiltroResp) sectionFiltroResp.classList.remove('hidden');
 
     if (modo === 'SISTEMA') {
       btnSistema.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-brand-500 bg-brand-50 text-brand-700 cursor-pointer';
       btnManual.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-slate-200 text-slate-500 hover:border-slate-300 cursor-pointer';
-      if (sectionFiltroResp) sectionFiltroResp.classList.remove('hidden');
+      if (sectionSearchActivo) sectionSearchActivo.classList.remove('hidden');
+      if (btnAddManualRow) btnAddManualRow.classList.add('hidden');
+      if (thSelectAll) thSelectAll.classList.remove('hidden');
       bienesSeleccionados = [];
-      renderSelectedBienesTable();
     } else {
       btnManual.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-brand-500 bg-brand-50 text-brand-700 cursor-pointer';
       btnSistema.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-slate-200 text-slate-500 hover:border-slate-300 cursor-pointer';
-      if (sectionFiltroResp) sectionFiltroResp.classList.add('hidden');
-      // En modo manual iniciar con 1 bien listo para rellenar
+      if (sectionSearchActivo) sectionSearchActivo.classList.add('hidden');
+      if (btnAddManualRow) {
+        btnAddManualRow.classList.remove('hidden');
+        btnAddManualRow.innerHTML = `<svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> + Agregar Activo`;
+      }
+      if (thSelectAll) thSelectAll.classList.add('hidden');
+      
+      // En modo manual iniciar con Activo 1 listo para rellenar
       bienesSeleccionados = [{
         cod_patrimonial: '',
         denominacion: '',
@@ -93,15 +117,16 @@ document.addEventListener('DOMContentLoaded', () => {
         numero_serie: 'S/S',
         estado_activo: 'BUENO',
         accesorios: '',
-        isManual: true
+        isManual: true,
+        seleccionado: true
       }];
-      renderSelectedBienesTable();
     }
     // Limpiar datos del responsable
     if (formResponsable) formResponsable.value = '';
     if (formCargo) formCargo.value = '';
     if (formUbicacion) formUbicacion.value = '';
     if (searchResponsable) searchResponsable.value = '';
+    renderSelectedBienesTable();
   };
 
   // Actualizar el código de salida mostrado al obtener el siguiente número
@@ -357,24 +382,26 @@ document.addEventListener('DOMContentLoaded', () => {
         searchResponsable.value = '';
         responsableSuggestions.classList.add('hidden');
 
-        // Cargar automáticamente relación de bienes asignados al responsable
-        const bienesDelResponsable = activos.filter(item => {
-          const resp = item.responsable ? item.responsable.trim().toUpperCase() : '';
-          return resp === name;
-        });
+        if (modoActual === 'SISTEMA') {
+          // En Modo Sistema, cargar automáticamente la relación de bienes asignados al responsable
+          const bienesDelResponsable = activos.filter(item => {
+            const resp = item.responsable ? item.responsable.trim().toUpperCase() : '';
+            return resp === name;
+          });
 
-        bienesSeleccionados = bienesDelResponsable.map(item => ({
-          cod_patrimonial: item.cod_patrimonial || '',
-          denominacion: item.denominacion || '',
-          color: item.color || 'NEGRO',
-          marca: item.marca || 'S/M',
-          modelo: item.modelo || 'S/M',
-          numero_serie: item.numero_serie || 'S/S',
-          estado_activo: item.estado_activo || 'BUENO',
-          accesorios: ''
-        }));
-
-        renderSelectedBienesTable();
+          bienesSeleccionados = bienesDelResponsable.map(item => ({
+            cod_patrimonial: item.cod_patrimonial || '',
+            denominacion: item.denominacion || '',
+            color: item.color || 'NEGRO',
+            marca: item.marca || 'S/M',
+            modelo: item.modelo || 'S/M',
+            numero_serie: item.numero_serie || 'S/S',
+            estado_activo: item.estado_activo || 'BUENO',
+            accesorios: '',
+            seleccionado: true
+          }));
+          renderSelectedBienesTable();
+        }
       });
       responsableSuggestions.appendChild(div);
     });
@@ -501,32 +528,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Renderizar la tabla de bienes seleccionados
   function renderSelectedBienesTable() {
+    const totalCount = bienesSeleccionados.length;
+    const selectedCount = bienesSeleccionados.filter(b => b.seleccionado !== false).length;
+
+    if (modoActual === 'SISTEMA') {
+      selectedCountBadge.textContent = `${selectedCount} de ${totalCount} Bienes Seleccionados`;
+    } else {
+      selectedCountBadge.textContent = `${totalCount} Bienes Registrados`;
+    }
+
     if (bienesSeleccionados.length === 0) {
+      const colSpan = modoActual === 'SISTEMA' ? 8 : 7;
       bienesTbody.innerHTML = `
         <tr id="empty-bienes-row">
-          <td colspan="7" class="p-8 text-center text-slate-400 font-medium">
+          <td colspan="${colSpan}" class="p-8 text-center text-slate-400 font-medium">
             <svg class="w-12 h-12 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
             </svg>
-            No se han agregado bienes a la orden. Búscalos arriba para agregarlos.
+            No se han agregado bienes a la orden. ${modoActual === 'SISTEMA' ? 'Seleccione un responsable arriba o busque un bien.' : 'Haga clic en "+ Agregar Activo" arriba.'}
           </td>
         </tr>
       `;
-      selectedCountBadge.textContent = '0 Bienes Seleccionados';
       return;
     }
 
     bienesTbody.innerHTML = '';
-    selectedCountBadge.textContent = `${bienesSeleccionados.length} Bienes Seleccionados`;
 
     bienesSeleccionados.forEach((bien, index) => {
       const row = document.createElement('tr');
-      row.className = 'hover:bg-slate-50 transition-colors align-middle';
+      const isUnselected = modoActual === 'SISTEMA' && bien.seleccionado === false;
+      row.className = `hover:bg-slate-50 transition-colors align-middle ${isUnselected ? 'opacity-40 bg-slate-50' : ''}`;
 
-      // Nro
+      // Checkbox (solo en Modo SISTEMA)
+      if (modoActual === 'SISTEMA') {
+        const cellChk = document.createElement('td');
+        cellChk.className = 'p-3 text-center';
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = bien.seleccionado !== false;
+        chk.className = 'w-4 h-4 text-brand-500 rounded border-slate-300 cursor-pointer';
+        chk.addEventListener('change', (e) => {
+          bienesSeleccionados[index].seleccionado = e.target.checked;
+          renderSelectedBienesTable();
+        });
+        cellChk.appendChild(chk);
+        row.appendChild(cellChk);
+      }
+
+      // N° / Activo X
       const cellNro = document.createElement('td');
-      cellNro.className = 'p-3 text-center font-bold text-slate-500';
-      cellNro.textContent = index + 1;
+      cellNro.className = 'p-3 text-center font-bold text-slate-700 whitespace-nowrap text-xs';
+      if (modoActual === 'MANUAL') {
+        cellNro.innerHTML = `<span class="bg-brand-50 text-brand-700 px-2 py-1 rounded font-extrabold text-[0.7rem] border border-brand-200">Activo ${index + 1}</span>`;
+      } else {
+        cellNro.textContent = index + 1;
+      }
       row.appendChild(cellNro);
 
       // Cod. Patrimonial
@@ -568,38 +624,34 @@ document.addEventListener('DOMContentLoaded', () => {
       // Características (Color, Marca, Modelo, Serie)
       const cellCaract = document.createElement('td');
       cellCaract.className = 'p-3';
-      
       const gridDiv = document.createElement('div');
       gridDiv.className = 'grid grid-cols-2 gap-1.5';
-      
       gridDiv.innerHTML = `
         <div class="flex flex-col">
           <span class="text-[0.6rem] font-bold text-slate-400 uppercase tracking-wide">Color</span>
-          <input type="text" value="${bien.color}" class="border border-slate-200 rounded px-1.5 py-0.5 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full" data-field="color" data-index="${index}">
+          <input type="text" value="${bien.color || 'NEGRO'}" class="border border-slate-200 rounded px-1.5 py-0.5 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full bg-white" data-field="color" data-index="${index}">
         </div>
         <div class="flex flex-col">
           <span class="text-[0.6rem] font-bold text-slate-400 uppercase tracking-wide">Marca</span>
-          <input type="text" value="${bien.marca}" class="border border-slate-200 rounded px-1.5 py-0.5 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full" data-field="marca" data-index="${index}">
+          <input type="text" value="${bien.marca || 'S/M'}" class="border border-slate-200 rounded px-1.5 py-0.5 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full bg-white" data-field="marca" data-index="${index}">
         </div>
         <div class="flex flex-col">
           <span class="text-[0.6rem] font-bold text-slate-400 uppercase tracking-wide">Modelo</span>
-          <input type="text" value="${bien.modelo}" class="border border-slate-200 rounded px-1.5 py-0.5 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full" data-field="modelo" data-index="${index}">
+          <input type="text" value="${bien.modelo || 'S/M'}" class="border border-slate-200 rounded px-1.5 py-0.5 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full bg-white" data-field="modelo" data-index="${index}">
         </div>
         <div class="flex flex-col">
           <span class="text-[0.6rem] font-bold text-slate-400 uppercase tracking-wide">Serie</span>
-          <input type="text" value="${bien.numero_serie}" class="border border-slate-200 rounded px-1.5 py-0.5 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full" data-field="numero_serie" data-index="${index}">
+          <input type="text" value="${bien.numero_serie || 'S/S'}" class="border border-slate-200 rounded px-1.5 py-0.5 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full bg-white" data-field="numero_serie" data-index="${index}">
         </div>
       `;
-
       cellCaract.appendChild(gridDiv);
       row.appendChild(cellCaract);
 
       // Estado
       const cellEstado = document.createElement('td');
       cellEstado.className = 'p-3';
-      
       const selectEstado = document.createElement('select');
-      selectEstado.className = 'border border-slate-200 rounded px-1.5 py-1 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full';
+      selectEstado.className = 'border border-slate-200 rounded px-1.5 py-1 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full bg-white font-medium';
       selectEstado.innerHTML = `
         <option value="BUENO" ${bien.estado_activo === 'BUENO' ? 'selected' : ''}>BUENO</option>
         <option value="REGULAR" ${bien.estado_activo === 'REGULAR' ? 'selected' : ''}>REGULAR</option>
@@ -615,12 +667,11 @@ document.addEventListener('DOMContentLoaded', () => {
       // Accesorios
       const cellAccesorios = document.createElement('td');
       cellAccesorios.className = 'p-3';
-      
       const inputAccesorios = document.createElement('input');
       inputAccesorios.type = 'text';
-      inputAccesorios.value = bien.accesorios;
+      inputAccesorios.value = bien.accesorios || '';
       inputAccesorios.placeholder = 'Cargador, mouse, etc...';
-      inputAccesorios.className = 'border border-slate-200 rounded px-2 py-1 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full';
+      inputAccesorios.className = 'border border-slate-200 rounded px-2 py-1 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full bg-white';
       inputAccesorios.addEventListener('input', (e) => {
         bienesSeleccionados[index].accesorios = e.target.value;
       });
@@ -630,7 +681,6 @@ document.addEventListener('DOMContentLoaded', () => {
       // Acciones
       const cellAccion = document.createElement('td');
       cellAccion.className = 'p-3 text-center';
-      
       const btnDelete = document.createElement('button');
       btnDelete.type = 'button';
       btnDelete.className = 'p-1.5 hover:bg-red-50 text-red-500 rounded transition-colors cursor-pointer';
@@ -649,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bienesTbody.appendChild(row);
     });
 
-    // Registrar inputs
+    // Registrar inputs de características
     const caractInputs = bienesTbody.querySelectorAll('input[data-field]');
     caractInputs.forEach(input => {
       input.addEventListener('input', (e) => {
@@ -701,13 +751,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (bienesSeleccionados.length === 0) {
-      alert('Por favor agregue al menos un bien patrimonial a la orden de salida.');
+    const bienesAEnviar = bienesSeleccionados.filter(b => b.seleccionado !== false);
+
+    if (bienesAEnviar.length === 0) {
+      alert('Por favor seleccione al menos un bien patrimonial activo para la orden de salida.');
       return;
     }
 
-    for (let i = 0; i < bienesSeleccionados.length; i++) {
-      const b = bienesSeleccionados[i];
+    for (let i = 0; i < bienesAEnviar.length; i++) {
+      const b = bienesAEnviar[i];
       if (!b.denominacion || !b.denominacion.trim()) {
         alert(`Por favor ingrese la denominación o descripción para el bien N° ${i + 1}.`);
         return;
@@ -731,7 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ubicacion: formUbicacion.value.trim(),
         resp_tecnico: formRespTecnico.value.trim() || null,
         observaciones: formObservaciones.value.trim() || null,
-        bienes: bienesSeleccionados.map(b => ({
+        bienes: bienesAEnviar.map(b => ({
           cod_patrimonial: b.cod_patrimonial || null,
           denominacion: b.denominacion,
           color: b.color || null,
