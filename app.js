@@ -1120,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const headers = [
       [
-        { content: 'NÚMERO', rowSpan: 2, styles: { halign: 'center', valign: 'middle', fontStyle: 'bold' } },
+        { content: 'N°', rowSpan: 2, styles: { halign: 'center', valign: 'middle', fontStyle: 'bold' } },
         { content: 'DENOMINACIÓN', rowSpan: 2, styles: { halign: 'center', valign: 'middle', fontStyle: 'bold' } },
         { content: 'CARACTERÍSTICAS DEL BIEN', colSpan: 4, styles: { halign: 'center', fontStyle: 'bold' } },
         { content: 'ESTADO', rowSpan: 2, styles: { halign: 'center', valign: 'middle', fontStyle: 'bold' } },
@@ -1146,8 +1146,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ]);
 
     const columnStyles = {
-      0: { cellWidth: 15, halign: 'center', fontStyle: 'bold' },
-      1: { cellWidth: 35 },
+      0: { cellWidth: 12, halign: 'center', fontStyle: 'bold' },
+      1: { cellWidth: 38 },
       2: { cellWidth: 18 },
       3: { cellWidth: 20 },
       4: { cellWidth: 22 },
