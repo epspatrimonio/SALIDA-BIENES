@@ -164,28 +164,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  let ubicacionesList = [];
-  // Procesar datos al cargar para obtener responsables y sucursales únicas
+  let cargosList = [];
+  let sucursalesList = ['SEDE CENTRAL', 'LA MERCED', 'SATIPO', 'OXAPAMPA', 'PICHANAKI', 'PERENÉ', 'VILLA RICA'];
+
+  // Procesar datos al cargar para obtener responsables, cargos y sucursales únicas
   function processActivosData() {
     responsablesDataMap = {};
     const respSet = new Set();
-    const ubiSet = new Set();
+    const cargoSet = new Set();
+    const sucSet = new Set(sucursalesList);
 
     activos.forEach(item => {
       const resp = item.responsable ? item.responsable.trim().toUpperCase() : '';
+      const cargo = item.puesto || item.subcategoria || item.unidad || '';
       const ubi = item.localidad || item.sucursal || '';
-      if (ubi && ubi.trim() !== '') ubiSet.add(ubi.trim().toUpperCase());
+
+      if (cargo && cargo.trim() !== '') cargoSet.add(cargo.trim().toUpperCase());
+      if (ubi && ubi.trim() !== '') sucSet.add(ubi.trim().toUpperCase());
 
       if (resp) {
         respSet.add(resp);
         if (!responsablesDataMap[resp]) {
           responsablesDataMap[resp] = {
-            cargo: item.puesto || item.unidad || '—',
+            cargo: cargo || '—',
             ubicacion: ubi || '—'
           };
         } else {
-          if (item.puesto && responsablesDataMap[resp].cargo === '—') {
-            responsablesDataMap[resp].cargo = item.puesto;
+          if (cargo && responsablesDataMap[resp].cargo === '—') {
+            responsablesDataMap[resp].cargo = cargo;
           }
           if (ubi && responsablesDataMap[resp].ubicacion === '—') {
             responsablesDataMap[resp].ubicacion = ubi;
@@ -195,7 +201,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     responsablesList = Array.from(respSet).sort();
-    ubicacionesList = Array.from(ubiSet).sort();
+    cargosList = Array.from(cargoSet).sort();
+    sucursalesList = Array.from(sucSet).sort();
+
+    populateSucursalesDropdown();
+  }
+
+  function populateSucursalesDropdown() {
+    const selectSucursal = document.getElementById('form-ubicacion');
+    if (!selectSucursal) return;
+    const currentVal = selectSucursal.value;
+    selectSucursal.innerHTML = '<option value="">-- Seleccionar Sucursal --</option>';
+    sucursalesList.forEach(suc => {
+      const opt = document.createElement('option');
+      opt.value = suc;
+      opt.textContent = suc;
+      selectSucursal.appendChild(opt);
+    });
+    if (currentVal) selectSucursal.value = currentVal;
+  }
+
+  function setSucursalValue(sucStr) {
+    const selectSucursal = document.getElementById('form-ubicacion');
+    if (!selectSucursal || !sucStr) return;
+    const target = sucStr.toUpperCase();
+    let match = sucursalesList.find(s => s === target);
+    if (!match) {
+      match = sucursalesList.find(s => target.includes(s) || s.includes(target));
+    }
+    if (match) {
+      selectSucursal.value = match;
+    } else if (target && target !== '—') {
+      const opt = document.createElement('option');
+      opt.value = target;
+      opt.textContent = target;
+      selectSucursal.appendChild(opt);
+      selectSucursal.value = target;
+    }
   }
 
   // Alternar entre pestañas de navegación
@@ -353,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const respTecnicoSuggestions = document.getElementById('resp-tecnico-suggestions');
-  const ubicacionSuggestions = document.getElementById('ubicacion-suggestions');
+  const cargoSuggestions = document.getElementById('cargo-suggestions');
 
   // Autocompletado directo en Nombre Responsable
   if (formResponsable && responsableSuggestions) {
@@ -383,8 +425,8 @@ document.addEventListener('DOMContentLoaded', () => {
         div.addEventListener('click', () => {
           formResponsable.value = name;
           if (info) {
-            formCargo.value = info.cargo;
-            formUbicacion.value = info.ubicacion;
+            formCargo.value = info.cargo !== '—' ? info.cargo : '';
+            setSucursalValue(info.ubicacion);
           }
           responsableSuggestions.classList.add('hidden');
 
@@ -415,31 +457,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Autocompletado en Sucursal / Dependencia
-  if (formUbicacion && ubicacionSuggestions) {
-    formUbicacion.addEventListener('input', (e) => {
+  // Autocompletado en Cargo / Unidad Orgánica
+  if (formCargo && cargoSuggestions) {
+    formCargo.addEventListener('input', (e) => {
       const query = e.target.value.trim().toUpperCase();
       if (!query) {
-        ubicacionSuggestions.classList.add('hidden');
+        cargoSuggestions.classList.add('hidden');
         return;
       }
-      const matches = ubicacionesList.filter(u => u.includes(query)).slice(0, 8);
+      const matches = cargosList.filter(c => c.includes(query)).slice(0, 10);
       if (matches.length === 0) {
-        ubicacionSuggestions.classList.add('hidden');
+        cargoSuggestions.classList.add('hidden');
         return;
       }
-      ubicacionSuggestions.innerHTML = '';
-      matches.forEach(ubi => {
+      cargoSuggestions.innerHTML = '';
+      matches.forEach(cargo => {
         const div = document.createElement('div');
         div.className = 'p-2 hover:bg-slate-50 cursor-pointer text-xs transition-colors border-b border-slate-100 last:border-b-0 font-medium text-slate-700';
-        div.textContent = ubi;
+        div.textContent = cargo;
         div.addEventListener('click', () => {
-          formUbicacion.value = ubi;
-          ubicacionSuggestions.classList.add('hidden');
+          formCargo.value = cargo;
+          cargoSuggestions.classList.add('hidden');
         });
-        ubicacionSuggestions.appendChild(div);
+        cargoSuggestions.appendChild(div);
       });
-      ubicacionSuggestions.classList.remove('hidden');
+      cargoSuggestions.classList.remove('hidden');
     });
   }
 
@@ -478,8 +520,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target !== formResponsable && responsableSuggestions) {
       responsableSuggestions.classList.add('hidden');
     }
-    if (e.target !== formUbicacion && ubicacionSuggestions) {
-      ubicacionSuggestions.classList.add('hidden');
+    if (e.target !== formCargo && cargoSuggestions) {
+      cargoSuggestions.classList.add('hidden');
     }
     if (e.target !== formRespTecnico && respTecnicoSuggestions) {
       respTecnicoSuggestions.classList.add('hidden');

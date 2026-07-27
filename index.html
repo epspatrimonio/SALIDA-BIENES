@@ -193,26 +193,35 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-5 flex flex-col gap-4">
           <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-2">Titular del Bien</h2>
           
-          <!-- Nombre Responsable (Con Autocompletado Integrado) -->
+          <!-- Nombre Responsable (Con Autocompletado de dim_personas / personal) -->
           <div class="relative">
             <label for="form-responsable" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Responsable</label>
-            <input type="text" id="form-responsable" required placeholder="Escriba el nombre del responsable..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
+            <input type="text" id="form-responsable" required placeholder="Escriba para filtrar responsable..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
             <!-- Autocomplete list para responsable -->
             <div id="responsable-suggestions" class="absolute left-0 right-0 mt-1 max-h-56 bg-white border border-slate-200 rounded-lg shadow-lg overflow-y-auto hidden z-30"></div>
           </div>
 
-          <!-- Cargo -->
-          <div>
-            <label for="form-cargo" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Cargo</label>
-            <input type="text" id="form-cargo" required placeholder="Ej: JEFE UO LA MERCED" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
+          <!-- Cargo / Unidad Orgánica (Con Autocompletado de Puestos) -->
+          <div class="relative">
+            <label for="form-cargo" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Unidad Orgánica / Cargo</label>
+            <input type="text" id="form-cargo" required placeholder="Escriba o busque puesto / unidad orgánica..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
+            <!-- Autocomplete list para cargo/puesto -->
+            <div id="cargo-suggestions" class="absolute left-0 right-0 mt-1 max-h-48 bg-white border border-slate-200 rounded-lg shadow-lg overflow-y-auto hidden z-20"></div>
           </div>
 
-          <!-- Sucursal / Dependencia -->
-          <div class="relative">
-            <label for="form-ubicacion" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Sucursal / Dependencia</label>
-            <input type="text" id="form-ubicacion" required placeholder="Ej: LA MERCED, SATIPO, OXAPAMPA..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
-            <!-- Sugerencias de Sucursal -->
-            <div id="ubicacion-suggestions" class="absolute left-0 right-0 mt-1 max-h-48 bg-white border border-slate-200 rounded-lg shadow-lg overflow-y-auto hidden z-20"></div>
+          <!-- Sucursal (Lista Desplegable) -->
+          <div>
+            <label for="form-ubicacion" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Sucursal</label>
+            <select id="form-ubicacion" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-brand-500 focus:outline-none cursor-pointer font-semibold text-slate-800">
+              <option value="">-- Seleccionar Sucursal --</option>
+              <option value="SEDE CENTRAL">SEDE CENTRAL</option>
+              <option value="LA MERCED">LA MERCED</option>
+              <option value="SATIPO">SATIPO</option>
+              <option value="OXAPAMPA">OXAPAMPA</option>
+              <option value="PICHANAKI">PICHANAKI</option>
+              <option value="PERENÉ">PERENÉ</option>
+              <option value="VILLA RICA">VILLA RICA</option>
+            </select>
           </div>
         </div>
 
