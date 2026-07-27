@@ -193,20 +193,12 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-5 flex flex-col gap-4">
           <h2 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-2">Titular del Bien</h2>
           
-          <!-- Búsqueda rápida de responsables (para autocompletar) - Solo en Modo Sistema -->
-          <div id="section-filtro-responsable" class="relative">
-            <label for="search-responsable" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Autocompletar Responsable</label>
-            <input type="text" id="search-responsable" placeholder="Buscar personal..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
-            <!-- Autocomplete list -->
-            <div id="responsable-suggestions" class="absolute left-0 right-0 mt-1 max-h-48 bg-white border border-slate-200 rounded-lg shadow-lg overflow-y-auto hidden z-20"></div>
-          </div>
-
-          <hr class="border-slate-100">
-
-          <!-- Responsable Manual -->
-          <div>
+          <!-- Nombre Responsable (Con Autocompletado Integrado) -->
+          <div class="relative">
             <label for="form-responsable" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Responsable</label>
-            <input type="text" id="form-responsable" required placeholder="Ej: ING. ERICK RAMIREZ PASSUNI" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
+            <input type="text" id="form-responsable" required placeholder="Escriba el nombre del responsable..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
+            <!-- Autocomplete list para responsable -->
+            <div id="responsable-suggestions" class="absolute left-0 right-0 mt-1 max-h-56 bg-white border border-slate-200 rounded-lg shadow-lg overflow-y-auto hidden z-30"></div>
           </div>
 
           <!-- Cargo -->
@@ -215,10 +207,12 @@
             <input type="text" id="form-cargo" required placeholder="Ej: JEFE UO LA MERCED" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
           </div>
 
-          <!-- Ubicación / Dependencia -->
-          <div>
-            <label for="form-ubicacion" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Ubicación / Dependencia</label>
-            <input type="text" id="form-ubicacion" required placeholder="Ej: JEFATURA UO LA MERCED" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
+          <!-- Sucursal / Dependencia -->
+          <div class="relative">
+            <label for="form-ubicacion" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Sucursal / Dependencia</label>
+            <input type="text" id="form-ubicacion" required placeholder="Ej: LA MERCED, SATIPO, OXAPAMPA..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
+            <!-- Sugerencias de Sucursal -->
+            <div id="ubicacion-suggestions" class="absolute left-0 right-0 mt-1 max-h-48 bg-white border border-slate-200 rounded-lg shadow-lg overflow-y-auto hidden z-20"></div>
           </div>
         </div>
 
@@ -284,12 +278,12 @@
                   <th class="p-3 w-10 text-center" id="th-select-all">
                     <input type="checkbox" id="chk-select-all" checked title="Seleccionar/Deseleccionar todos los bienes" class="w-4 h-4 text-brand-500 rounded border-slate-300 cursor-pointer">
                   </th>
-                  <th class="p-3 w-10 text-center">N°</th>
+                  <th class="p-3 w-12 text-center">N°</th>
                   <th class="p-3 w-32">Cód. Patrimonial</th>
-                  <th class="p-3 w-36">Denominación</th>
-                  <th class="p-3 min-w-[200px]">Características del Bien (Color, Marca, Modelo, Serie)</th>
-                  <th class="p-3 w-24">Estado</th>
-                  <th class="p-3 w-32">Accesorios</th>
+                  <th class="p-3 w-40">Denominación</th>
+                  <th class="p-3 min-w-[220px]">Características del Bien (Color, Marca, Modelo, Serie)</th>
+                  <th class="p-3 w-32 text-center">Estado</th>
+                  <th class="p-3 w-36">Accesorios</th>
                   <th class="p-3 w-16 text-center">Acciones</th>
                 </tr>
               </thead>

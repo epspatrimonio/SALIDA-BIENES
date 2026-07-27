@@ -83,12 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
     modoActual = modo;
     const btnSistema = document.getElementById('modo-sistema-btn');
     const btnManual = document.getElementById('modo-manual-btn');
-    const sectionFiltroResp = document.getElementById('section-filtro-responsable');
     const sectionSearchActivo = document.getElementById('section-search-activo');
     const thSelectAll = document.getElementById('th-select-all');
-
-    // El autocompletado de responsables se mantiene VISIBLE en ambos modos
-    if (sectionFiltroResp) sectionFiltroResp.classList.remove('hidden');
 
     if (modo === 'SISTEMA') {
       btnSistema.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-brand-500 bg-brand-50 text-brand-700 cursor-pointer';
@@ -125,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (formResponsable) formResponsable.value = '';
     if (formCargo) formCargo.value = '';
     if (formUbicacion) formUbicacion.value = '';
-    if (searchResponsable) searchResponsable.value = '';
     renderSelectedBienesTable();
   };
 
@@ -169,32 +164,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Procesar datos al cargar para obtener responsables únicos
+  let ubicacionesList = [];
+  // Procesar datos al cargar para obtener responsables y sucursales únicas
   function processActivosData() {
     responsablesDataMap = {};
     const respSet = new Set();
+    const ubiSet = new Set();
 
     activos.forEach(item => {
       const resp = item.responsable ? item.responsable.trim().toUpperCase() : '';
+      const ubi = item.localidad || item.sucursal || '';
+      if (ubi && ubi.trim() !== '') ubiSet.add(ubi.trim().toUpperCase());
+
       if (resp) {
         respSet.add(resp);
         if (!responsablesDataMap[resp]) {
           responsablesDataMap[resp] = {
             cargo: item.puesto || item.unidad || '—',
-            ubicacion: item.localidad || item.sucursal || '—'
+            ubicacion: ubi || '—'
           };
         } else {
           if (item.puesto && responsablesDataMap[resp].cargo === '—') {
             responsablesDataMap[resp].cargo = item.puesto;
           }
-          if (item.localidad && responsablesDataMap[resp].ubicacion === '—') {
-            responsablesDataMap[resp].ubicacion = item.localidad;
+          if (ubi && responsablesDataMap[resp].ubicacion === '—') {
+            responsablesDataMap[resp].ubicacion = ubi;
           }
         }
       }
     });
 
     responsablesList = Array.from(respSet).sort();
+    ubicacionesList = Array.from(ubiSet).sort();
   }
 
   // Alternar entre pestañas de navegación
@@ -352,61 +353,95 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const respTecnicoSuggestions = document.getElementById('resp-tecnico-suggestions');
+  const ubicacionSuggestions = document.getElementById('ubicacion-suggestions');
 
-  // Autocompletado de Responsables principales
-  searchResponsable.addEventListener('input', (e) => {
-    const query = e.target.value.trim().toUpperCase();
-    if (!query) {
-      responsableSuggestions.classList.add('hidden');
-      return;
-    }
-
-    const matches = responsablesList.filter(name => name.includes(query)).slice(0, 10);
-    if (matches.length === 0) {
-      responsableSuggestions.classList.add('hidden');
-      return;
-    }
-
-    responsableSuggestions.innerHTML = '';
-    matches.forEach(name => {
-      const div = document.createElement('div');
-      div.className = 'p-2.5 hover:bg-slate-50 cursor-pointer text-xs transition-colors border-b border-slate-100 last:border-b-0 font-medium text-slate-700';
-      div.textContent = name;
-      div.addEventListener('click', () => {
-        formResponsable.value = name;
-        const info = responsablesDataMap[name];
-        if (info) {
-          formCargo.value = info.cargo;
-          formUbicacion.value = info.ubicacion;
-        }
-        searchResponsable.value = '';
+  // Autocompletado directo en Nombre Responsable
+  if (formResponsable && responsableSuggestions) {
+    formResponsable.addEventListener('input', (e) => {
+      const query = e.target.value.trim().toUpperCase();
+      if (!query) {
         responsableSuggestions.classList.add('hidden');
+        return;
+      }
 
-        if (modoActual === 'SISTEMA') {
-          // En Modo Sistema, cargar automáticamente la relación de bienes asignados al responsable
-          const bienesDelResponsable = activos.filter(item => {
-            const resp = item.responsable ? item.responsable.trim().toUpperCase() : '';
-            return resp === name;
-          });
+      const matches = responsablesList.filter(name => name.includes(query)).slice(0, 10);
+      if (matches.length === 0) {
+        responsableSuggestions.classList.add('hidden');
+        return;
+      }
 
-          bienesSeleccionados = bienesDelResponsable.map(item => ({
-            cod_patrimonial: item.cod_patrimonial || '',
-            denominacion: item.denominacion || '',
-            color: item.color || 'NEGRO',
-            marca: item.marca || 'S/M',
-            modelo: item.modelo || 'S/M',
-            numero_serie: item.numero_serie || 'S/S',
-            estado_activo: item.estado_activo || 'BUENO',
-            accesorios: '',
-            seleccionado: true
-          }));
-          renderSelectedBienesTable();
-        }
+      responsableSuggestions.innerHTML = '';
+      matches.forEach(name => {
+        const div = document.createElement('div');
+        div.className = 'p-2.5 hover:bg-slate-50 cursor-pointer text-xs transition-colors border-b border-slate-100 last:border-b-0 font-medium text-slate-700 flex justify-between items-center';
+        const info = responsablesDataMap[name];
+        const detailStr = info ? `${info.cargo} (${info.ubicacion})` : '';
+        div.innerHTML = `
+          <span class="font-semibold text-slate-900">${name}</span>
+          <span class="text-[0.7rem] text-slate-400 font-normal truncate max-w-[180px] ml-2">${detailStr}</span>
+        `;
+        div.addEventListener('click', () => {
+          formResponsable.value = name;
+          if (info) {
+            formCargo.value = info.cargo;
+            formUbicacion.value = info.ubicacion;
+          }
+          responsableSuggestions.classList.add('hidden');
+
+          if (modoActual === 'SISTEMA') {
+            // En Modo Sistema, cargar automáticamente los bienes del responsable
+            const bienesDelResponsable = activos.filter(item => {
+              const resp = item.responsable ? item.responsable.trim().toUpperCase() : '';
+              return resp === name;
+            });
+
+            bienesSeleccionados = bienesDelResponsable.map(item => ({
+              cod_patrimonial: item.cod_patrimonial || '',
+              denominacion: item.denominacion || '',
+              color: item.color || 'NEGRO',
+              marca: item.marca || 'S/M',
+              modelo: item.modelo || 'S/M',
+              numero_serie: item.numero_serie || 'S/S',
+              estado_activo: item.estado_activo || 'BUENO',
+              accesorios: '',
+              seleccionado: true
+            }));
+            renderSelectedBienesTable();
+          }
+        });
+        responsableSuggestions.appendChild(div);
       });
-      responsableSuggestions.appendChild(div);
+      responsableSuggestions.classList.remove('hidden');
     });
-    responsableSuggestions.classList.remove('hidden');
-  });
+  }
+
+  // Autocompletado en Sucursal / Dependencia
+  if (formUbicacion && ubicacionSuggestions) {
+    formUbicacion.addEventListener('input', (e) => {
+      const query = e.target.value.trim().toUpperCase();
+      if (!query) {
+        ubicacionSuggestions.classList.add('hidden');
+        return;
+      }
+      const matches = ubicacionesList.filter(u => u.includes(query)).slice(0, 8);
+      if (matches.length === 0) {
+        ubicacionSuggestions.classList.add('hidden');
+        return;
+      }
+      ubicacionSuggestions.innerHTML = '';
+      matches.forEach(ubi => {
+        const div = document.createElement('div');
+        div.className = 'p-2 hover:bg-slate-50 cursor-pointer text-xs transition-colors border-b border-slate-100 last:border-b-0 font-medium text-slate-700';
+        div.textContent = ubi;
+        div.addEventListener('click', () => {
+          formUbicacion.value = ubi;
+          ubicacionSuggestions.classList.add('hidden');
+        });
+        ubicacionSuggestions.appendChild(div);
+      });
+      ubicacionSuggestions.classList.remove('hidden');
+    });
+  }
 
   // Autocompletado para Responsable Cargo Salida (Área Técnica)
   if (formRespTecnico && respTecnicoSuggestions) {
@@ -440,13 +475,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Cerrar sugerencias al hacer click fuera
   document.addEventListener('click', (e) => {
-    if (e.target !== searchResponsable) {
+    if (e.target !== formResponsable && responsableSuggestions) {
       responsableSuggestions.classList.add('hidden');
+    }
+    if (e.target !== formUbicacion && ubicacionSuggestions) {
+      ubicacionSuggestions.classList.add('hidden');
     }
     if (e.target !== formRespTecnico && respTecnicoSuggestions) {
       respTecnicoSuggestions.classList.add('hidden');
     }
-    if (e.target !== searchActivo) {
+    if (e.target !== searchActivo && activoSuggestions) {
       activoSuggestions.classList.add('hidden');
     }
   });
@@ -649,9 +687,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Estado
       const cellEstado = document.createElement('td');
-      cellEstado.className = 'p-3';
+      cellEstado.className = 'p-3 text-center';
       const selectEstado = document.createElement('select');
-      selectEstado.className = 'border border-slate-200 rounded px-1.5 py-1 text-[0.7rem] focus:outline-none focus:border-brand-500 w-full bg-white font-medium';
+      selectEstado.className = 'border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 bg-white shadow-sm focus:outline-none focus:border-brand-500 cursor-pointer min-w-[95px]';
       selectEstado.innerHTML = `
         <option value="BUENO" ${bien.estado_activo === 'BUENO' ? 'selected' : ''}>BUENO</option>
         <option value="REGULAR" ${bien.estado_activo === 'REGULAR' ? 'selected' : ''}>REGULAR</option>
