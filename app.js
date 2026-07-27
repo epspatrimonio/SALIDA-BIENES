@@ -166,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Procesar datos de las tablas de dimensiones para selectores y autocompletados
   function processDimensionData(personalData, sucursalesData, puestosData) {
+    const EXCLUDED_SUCURSALES = new Set(['SELVA CENTRAL', 'EPS SELVA CENTRAL', 'SELVA CENTRAL S.A.', 'RETIRADAS', 'SIN ASIGNAR']);
     responsablesDataMap = {};
     const respSet = new Set();
     const cargoSet = new Set();
@@ -185,11 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // 2. Cargar dimensión sucursales (vw_lista_sucursal)
+    // 2. Cargar dimensión sucursales (vw_lista_sucursal) - Filtra SELVA CENTRAL
     if (Array.isArray(sucursalesData)) {
       sucursalesData.forEach(s => {
         const suc = (s.label || s.sucursal || '').trim().toUpperCase();
-        if (suc) sucSet.add(suc);
+        if (suc && !EXCLUDED_SUCURSALES.has(suc)) sucSet.add(suc);
       });
     }
 
@@ -201,14 +202,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // 4. Complementar con responsables y ubicaciones asociadas a activos
+    // 4. Complementar con responsables y ubicaciones asociadas a activos (excluyendo SELVA CENTRAL)
     activos.forEach(item => {
       const resp = item.responsable ? item.responsable.trim().toUpperCase() : '';
       const cargo = item.puesto || item.subcategoria || item.unidad || '';
-      const ubi = item.localidad || item.sucursal || '';
+      const ubi = (item.sucursal || item.localidad || '').trim().toUpperCase();
 
       if (cargo && cargo.trim() !== '') cargoSet.add(cargo.trim().toUpperCase());
-      if (ubi && ubi.trim() !== '') sucSet.add(ubi.trim().toUpperCase());
+      if (ubi && ubi !== '' && !EXCLUDED_SUCURSALES.has(ubi)) {
+        sucSet.add(ubi);
+      }
 
       if (resp) {
         respSet.add(resp);
