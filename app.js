@@ -400,6 +400,93 @@ document.addEventListener('DOMContentLoaded', () => {
       cellBienes.textContent = salida.bienes ? salida.bienes.length : 0;
       row.appendChild(cellBienes);
 
+      // Devolución / Estado (SALIDA, REGRESO, OBSERVADO)
+      const cellDevolucion = document.createElement('td');
+      cellDevolucion.className = 'p-3 text-center';
+
+      const currentEstado = (salida.estado_devolucion || 'SALIDA').toUpperCase();
+      const currentObs = salida.obs_devolucion || '';
+
+      const selectDev = document.createElement('select');
+      selectDev.className = `px-2 py-1 rounded-md text-[0.7rem] font-bold border transition-colors cursor-pointer focus:outline-none ${
+        currentEstado === 'REGRESO' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
+        currentEstado === 'OBSERVADO' ? 'bg-amber-50 text-amber-700 border-amber-300' :
+        'bg-blue-50 text-blue-700 border-blue-300'
+      }`;
+
+      ['SALIDA', 'REGRESO', 'OBSERVADO'].forEach(st => {
+        const opt = document.createElement('option');
+        opt.value = st;
+        opt.textContent = st === 'SALIDA' ? '🔴 SALIDA' : st === 'REGRESO' ? '🟢 REGRESO' : '🟠 OBSERVADO';
+        if (st === currentEstado) opt.selected = true;
+        selectDev.appendChild(opt);
+      });
+
+      const obsSpan = document.createElement('div');
+      obsSpan.className = 'text-[0.65rem] text-amber-700 italic mt-1 max-w-[140px] truncate cursor-pointer font-medium hover:underline mx-auto';
+      obsSpan.title = currentObs ? `Observación: ${currentObs} (Clic para editar)` : 'Clic para agregar observación';
+      obsSpan.textContent = currentObs ? `💬 ${currentObs}` : (currentEstado === 'OBSERVADO' ? '+ Agregar obs.' : '');
+      if (currentEstado !== 'OBSERVADO' && !currentObs) obsSpan.style.display = 'none';
+
+      selectDev.addEventListener('change', async (e) => {
+        const newEstado = e.target.value;
+        let newObs = currentObs;
+
+        if (newEstado === 'OBSERVADO') {
+          const userObs = prompt('Ingrese la observación del retorno del bien:', currentObs || '');
+          if (userObs !== null) {
+            newObs = userObs.trim();
+          }
+        } else {
+          newObs = '';
+        }
+
+        try {
+          const res = await fetch(`${API_BASE}/activos/salidas/${salida.id}/devolucion`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado_devolucion: newEstado, obs_devolucion: newObs })
+          });
+          if (res.ok) {
+            salida.estado_devolucion = newEstado;
+            salida.obs_devolucion = newObs;
+            selectDev.className = `px-2 py-1 rounded-md text-[0.7rem] font-bold border transition-colors cursor-pointer focus:outline-none ${
+              newEstado === 'REGRESO' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
+              newEstado === 'OBSERVADO' ? 'bg-amber-50 text-amber-700 border-amber-300' :
+              'bg-blue-50 text-blue-700 border-blue-300'
+            }`;
+            obsSpan.textContent = newObs ? `💬 ${newObs}` : (newEstado === 'OBSERVADO' ? '+ Agregar obs.' : '');
+            obsSpan.style.display = (newEstado === 'OBSERVADO' || newObs) ? 'block' : 'none';
+          }
+        } catch (err) {
+          console.error('Error al actualizar devolución:', err);
+        }
+      });
+
+      obsSpan.addEventListener('click', async () => {
+        const userObs = prompt('Editar observación de retorno:', salida.obs_devolucion || '');
+        if (userObs !== null) {
+          const newObs = userObs.trim();
+          try {
+            const res = await fetch(`${API_BASE}/activos/salidas/${salida.id}/devolucion`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ estado_devolucion: salida.estado_devolucion || 'OBSERVADO', obs_devolucion: newObs })
+            });
+            if (res.ok) {
+              salida.obs_devolucion = newObs;
+              obsSpan.textContent = newObs ? `💬 ${newObs}` : '+ Agregar obs.';
+            }
+          } catch (err) {
+            console.error('Error al actualizar observación:', err);
+          }
+        }
+      });
+
+      cellDevolucion.appendChild(selectDev);
+      cellDevolucion.appendChild(obsSpan);
+      row.appendChild(cellDevolucion);
+
       // Acciones (Re-generar PDF)
       const cellAccion = document.createElement('td');
       cellAccion.className = 'p-3 text-center';
