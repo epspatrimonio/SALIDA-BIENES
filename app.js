@@ -841,15 +841,15 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function limpiarFormularioCompleto() {
-    formMotivo.value = '';
-    formResponsable.value = '';
-    formCargo.value = '';
-    formUbicacion.value = '';
-    formRespTecnico.value = '';
-    formObservaciones.value = '';
-    formFecha.value = hoy;
-    searchResponsable.value = '';
-    searchActivo.value = '';
+    if (formMotivo) formMotivo.value = '';
+    if (formResponsable) formResponsable.value = '';
+    if (formCargo) formCargo.value = '';
+    if (formUbicacion) formUbicacion.value = '';
+    if (formRespTecnico) formRespTecnico.value = '';
+    if (formObservaciones) formObservaciones.value = '';
+    if (formFecha) formFecha.value = hoy;
+    if (searchResponsable) searchResponsable.value = '';
+    if (searchActivo) searchActivo.value = '';
     bienesSeleccionados = [];
     renderSelectedBienesTable();
   }
@@ -894,8 +894,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btnGenerar.disabled = true;
 
     try {
-      // 1. Recopilar datos para la API
-      const selectedTipo = document.querySelector('input[name="tipo_salida"]:checked').value;
+      const tipoInput = document.querySelector('input[name="tipo_salida"]:checked');
+      const selectedTipo = tipoInput ? tipoInput.value : 'Mantenimiento';
       
       const payload = {
         fecha_orden: formFecha.value,
