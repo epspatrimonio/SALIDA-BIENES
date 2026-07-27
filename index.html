@@ -66,7 +66,31 @@
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
+
+    /* Estilos adaptativos cuando se carga dentro del Módulo del App Principal (iframe) */
+    body.in-iframe header,
+    html.in-iframe header {
+      display: none !important;
+    }
+    body.in-iframe footer,
+    html.in-iframe footer {
+      display: none !important;
+    }
+    body.in-iframe main,
+    html.in-iframe main {
+      padding: 0.75rem !important;
+      max-width: 100% !important;
+      gap: 1rem !important;
+    }
   </style>
+  <script>
+    if (window.self !== window.top) {
+      document.documentElement.classList.add('in-iframe');
+      document.addEventListener('DOMContentLoaded', function() {
+        document.body.classList.add('in-iframe');
+      });
+    }
+  </script>
 </head>
 <body class="min-h-full flex flex-col bg-slate-50 text-slate-800">
 
