@@ -296,7 +296,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Autocompletado de Responsables
+  const respTecnicoSuggestions = document.getElementById('resp-tecnico-suggestions');
+
+  // Autocompletado de Responsables principales
   searchResponsable.addEventListener('input', (e) => {
     const query = e.target.value.trim().toUpperCase();
     if (!query) {
@@ -324,16 +326,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         searchResponsable.value = '';
         responsableSuggestions.classList.add('hidden');
+
+        // Cargar automáticamente relación de bienes asignados al responsable
+        const bienesDelResponsable = activos.filter(item => {
+          const resp = item.responsable ? item.responsable.trim().toUpperCase() : '';
+          return resp === name;
+        });
+
+        bienesSeleccionados = bienesDelResponsable.map(item => ({
+          cod_patrimonial: item.cod_patrimonial || '',
+          denominacion: item.denominacion || '',
+          color: item.color || 'NEGRO',
+          marca: item.marca || 'S/M',
+          modelo: item.modelo || 'S/M',
+          numero_serie: item.numero_serie || 'S/S',
+          estado_activo: item.estado_activo || 'BUENO',
+          accesorios: ''
+        }));
+
+        renderSelectedBienesTable();
       });
       responsableSuggestions.appendChild(div);
     });
     responsableSuggestions.classList.remove('hidden');
   });
 
+  // Autocompletado para Responsable Cargo Salida (Área Técnica)
+  if (formRespTecnico && respTecnicoSuggestions) {
+    formRespTecnico.addEventListener('input', (e) => {
+      const query = e.target.value.trim().toUpperCase();
+      if (!query) {
+        respTecnicoSuggestions.classList.add('hidden');
+        return;
+      }
+
+      const matches = responsablesList.filter(name => name.includes(query)).slice(0, 10);
+      if (matches.length === 0) {
+        respTecnicoSuggestions.classList.add('hidden');
+        return;
+      }
+
+      respTecnicoSuggestions.innerHTML = '';
+      matches.forEach(name => {
+        const div = document.createElement('div');
+        div.className = 'p-2.5 hover:bg-slate-50 cursor-pointer text-xs transition-colors border-b border-slate-100 last:border-b-0 font-medium text-slate-700';
+        div.textContent = name;
+        div.addEventListener('click', () => {
+          formRespTecnico.value = name;
+          respTecnicoSuggestions.classList.add('hidden');
+        });
+        respTecnicoSuggestions.appendChild(div);
+      });
+      respTecnicoSuggestions.classList.remove('hidden');
+    });
+  }
+
   // Cerrar sugerencias al hacer click fuera
   document.addEventListener('click', (e) => {
     if (e.target !== searchResponsable) {
       responsableSuggestions.classList.add('hidden');
+    }
+    if (e.target !== formRespTecnico && respTecnicoSuggestions) {
+      respTecnicoSuggestions.classList.add('hidden');
     }
     if (e.target !== searchActivo) {
       activoSuggestions.classList.add('hidden');
