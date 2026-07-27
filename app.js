@@ -467,10 +467,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         div.addEventListener('click', () => {
           formResponsable.value = name;
-          if (info) {
-            formCargo.value = info.cargo !== '—' ? info.cargo : '';
-            setSucursalValue(info.ubicacion);
-          }
           responsableSuggestions.classList.add('hidden');
 
           if (modoActual === 'SISTEMA') {
