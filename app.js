@@ -48,6 +48,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const hoy = new Date().toISOString().split('T')[0];
   formFecha.value = hoy;
 
+  const btnAddManualRow = document.getElementById('btn-add-manual-row');
+  if (btnAddManualRow) {
+    btnAddManualRow.addEventListener('click', () => {
+      bienesSeleccionados.push({
+        cod_patrimonial: '',
+        denominacion: '',
+        color: 'NEGRO',
+        marca: 'S/M',
+        modelo: 'S/M',
+        numero_serie: 'S/S',
+        estado_activo: 'BUENO',
+        accesorios: '',
+        isManual: true
+      });
+      renderSelectedBienesTable();
+    });
+  }
+
   // Función global de cambio de modo (llamada desde onclick en HTML)
   window.setModo = function(modo) {
     modoActual = modo;
@@ -59,13 +77,25 @@ document.addEventListener('DOMContentLoaded', () => {
       btnSistema.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-brand-500 bg-brand-50 text-brand-700 cursor-pointer';
       btnManual.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-slate-200 text-slate-500 hover:border-slate-300 cursor-pointer';
       if (sectionFiltroResp) sectionFiltroResp.classList.remove('hidden');
+      bienesSeleccionados = [];
+      renderSelectedBienesTable();
     } else {
       btnManual.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-brand-500 bg-brand-50 text-brand-700 cursor-pointer';
       btnSistema.className = 'flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-bold transition-all border-slate-200 text-slate-500 hover:border-slate-300 cursor-pointer';
       if (sectionFiltroResp) sectionFiltroResp.classList.add('hidden');
-      // En modo manual limpiar los bienes cargados del sistema
-      bienesSeleccionados = [];
-      renderBienesTable();
+      // En modo manual iniciar con 1 bien listo para rellenar
+      bienesSeleccionados = [{
+        cod_patrimonial: '',
+        denominacion: '',
+        color: 'NEGRO',
+        marca: 'S/M',
+        modelo: 'S/M',
+        numero_serie: 'S/S',
+        estado_activo: 'BUENO',
+        accesorios: '',
+        isManual: true
+      }];
+      renderSelectedBienesTable();
     }
     // Limpiar datos del responsable
     if (formResponsable) formResponsable.value = '';
@@ -502,13 +532,37 @@ document.addEventListener('DOMContentLoaded', () => {
       // Cod. Patrimonial
       const cellCod = document.createElement('td');
       cellCod.className = 'p-3 font-semibold text-slate-900 font-mono';
-      cellCod.textContent = bien.cod_patrimonial || '—';
+      if (modoActual === 'MANUAL' || bien.isManual) {
+        const inputCod = document.createElement('input');
+        inputCod.type = 'text';
+        inputCod.value = bien.cod_patrimonial || '';
+        inputCod.placeholder = 'Manual (Opcional)';
+        inputCod.className = 'border border-slate-200 rounded px-1.5 py-1 text-[0.75rem] focus:outline-none focus:border-brand-500 w-full font-mono bg-white';
+        inputCod.addEventListener('input', (e) => {
+          bienesSeleccionados[index].cod_patrimonial = e.target.value;
+        });
+        cellCod.appendChild(inputCod);
+      } else {
+        cellCod.textContent = bien.cod_patrimonial || '—';
+      }
       row.appendChild(cellCod);
 
       // Denominación
       const cellDenom = document.createElement('td');
       cellDenom.className = 'p-3 font-medium text-slate-800';
-      cellDenom.textContent = bien.denominacion;
+      if (modoActual === 'MANUAL' || bien.isManual) {
+        const inputDenom = document.createElement('input');
+        inputDenom.type = 'text';
+        inputDenom.value = bien.denominacion || '';
+        inputDenom.placeholder = 'Ej: LAPTOP / IMPRESORA... *';
+        inputDenom.className = 'border border-slate-200 rounded px-1.5 py-1 text-[0.75rem] focus:outline-none focus:border-brand-500 w-full font-semibold bg-white';
+        inputDenom.addEventListener('input', (e) => {
+          bienesSeleccionados[index].denominacion = e.target.value;
+        });
+        cellDenom.appendChild(inputDenom);
+      } else {
+        cellDenom.textContent = bien.denominacion;
+      }
       row.appendChild(cellDenom);
 
       // Características (Color, Marca, Modelo, Serie)
@@ -650,6 +704,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bienesSeleccionados.length === 0) {
       alert('Por favor agregue al menos un bien patrimonial a la orden de salida.');
       return;
+    }
+
+    for (let i = 0; i < bienesSeleccionados.length; i++) {
+      const b = bienesSeleccionados[i];
+      if (!b.denominacion || !b.denominacion.trim()) {
+        alert(`Por favor ingrese la denominación o descripción para el bien N° ${i + 1}.`);
+        return;
+      }
     }
 
     const originalText = btnGenerar.innerHTML;
